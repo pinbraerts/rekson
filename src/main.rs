@@ -1,19 +1,19 @@
 use std::io::{stdin, stdout, Read, Write};
 
-use lexer::lexer;
-use parser::{parse, Token};
+use lexer::Lexer;
+use parser::Parser;
 pub mod lexer;
 pub mod parser;
 
 fn process(content: &str) -> String {
-    let mut state = None;
-    let mut previous = Token::default();
-    let mut whitespace = String::new();
+    let mut lexer = Lexer::default();
+    let mut parser = Parser::default();
     content
         .chars()
-        .chain(['\0', '\0'])
-        .filter_map(|c| lexer(&mut state, c))
-        .flat_map(|l| parse(&mut previous, &mut whitespace, l))
+        .chain(Some('\0'))
+        .filter_map(|c| lexer.process(c))
+        .chain(Some(Default::default()))
+        .flat_map(|l| parser.parse(l))
         .flatten()
         .map(Into::<String>::into)
         .collect()

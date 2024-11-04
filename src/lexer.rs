@@ -17,6 +17,12 @@ pub enum Lexem {
     WhiteSpace(String),
 }
 
+impl Default for Lexem {
+    fn default() -> Self {
+        Self::Close(Paired::File)
+    }
+}
+
 fn fix_str(s: &str) -> String {
     Some('\"')
         .into_iter()
@@ -64,44 +70,51 @@ impl From<Lexem> for String {
     }
 }
 
-pub fn lexer(state: &mut Option<Lexem>, character: char) -> Option<Lexem> {
-    if let Some(Lexem::String(s)) = state {
-        let first_char = s.chars().next().unwrap_or_default();
-        let last_char = s.chars().last().unwrap_or_default();
-        s.push(character);
-        if last_char != '\\' && character == first_char {
-            return std::mem::take(state);
-        }
-        return None;
-    }
-    let next = match character {
-        '(' => Lexem::Open(Paired::Parenthesis),
-        ')' => Lexem::Close(Paired::Parenthesis),
-        '[' => Lexem::Open(Paired::Bracket),
-        ']' => Lexem::Close(Paired::Bracket),
-        '{' => Lexem::Open(Paired::Brace),
-        '}' => Lexem::Close(Paired::Brace),
-        '\0' => Lexem::Close(Paired::File),
-        ',' => Lexem::Comma,
-        ':' | '=' => Lexem::Colon,
-        '"' | '\'' | '`' => {
-            return std::mem::replace(state, Some(Lexem::String(character.into())));
-        }
-        _ => {
-            if character.is_whitespace() {
-                if let Some(Lexem::WhiteSpace(s)) = state {
-                    s.push(character);
-                    return None;
-                }
-                Lexem::WhiteSpace(character.into())
-            } else {
-                if let Some(Lexem::Else(s)) = state {
-                    s.push(character);
-                    return None;
-                }
-                Lexem::Else(character.into())
+#[derive(Debug, Default)]
+pub struct Lexer {
+    state: Option<Lexem>,
+}
+
+impl Lexer {
+    pub fn process(&mut self, character: char) -> Option<Lexem> {
+        if let Some(Lexem::String(s)) = &mut self.state {
+            let first_char = s.chars().next().unwrap_or_default();
+            let last_char = s.chars().last().unwrap_or_default();
+            s.push(character);
+            if last_char != '\\' && character == first_char {
+                return std::mem::take(&mut self.state);
             }
+            return None;
         }
-    };
-    std::mem::replace(state, Some(next))
+        let next = match character {
+            '(' => Lexem::Open(Paired::Parenthesis),
+            ')' => Lexem::Close(Paired::Parenthesis),
+            '[' => Lexem::Open(Paired::Bracket),
+            ']' => Lexem::Close(Paired::Bracket),
+            '{' => Lexem::Open(Paired::Brace),
+            '}' => Lexem::Close(Paired::Brace),
+            '\0' => Lexem::Close(Paired::File),
+            ',' => Lexem::Comma,
+            ':' | '=' => Lexem::Colon,
+            '"' | '\'' | '`' => {
+                return std::mem::replace(&mut self.state, Some(Lexem::String(character.into())));
+            }
+            _ => {
+                if character.is_whitespace() {
+                    if let Some(Lexem::WhiteSpace(s)) = &mut self.state {
+                        s.push(character);
+                        return None;
+                    }
+                    Lexem::WhiteSpace(character.into())
+                } else {
+                    if let Some(Lexem::Else(s)) = &mut self.state {
+                        s.push(character);
+                        return None;
+                    }
+                    Lexem::Else(character.into())
+                }
+            }
+        };
+        std::mem::replace(&mut self.state, Some(next))
+    }
 }

@@ -7,6 +7,7 @@ pub enum ValidateResult<T> {
     DropBefore,
 }
 
+#[derive(Debug)]
 pub struct Token {
     pub lexem: Lexem,
     pub whitespace_before: String,
@@ -65,26 +66,35 @@ pub fn validate(previous: &Lexem, lexem: &Lexem) -> ValidateResult<Lexem> {
     }
 }
 
-pub fn parse(previous: &mut Token, whitespace: &mut String, lexem: Lexem) -> [Option<Token>; 2] {
-    if let Lexem::WhiteSpace(s) = lexem {
-        whitespace.push_str(s.as_str());
-        return [None, None];
-    }
-    let token = Token::new(lexem, std::mem::take(whitespace));
-    match validate(&previous.lexem, &token.lexem) {
-        ValidateResult::Take => [Some(std::mem::replace(previous, token)), None],
-        ValidateResult::DropBefore => {
-            let ws = std::mem::take(&mut previous.whitespace_before);
-            *previous = token;
-            previous.whitespace_before.push_str(&ws);
-            [None, None]
+#[derive(Default, Debug)]
+pub struct Parser {
+    whitespace: String,
+    previous: Token,
+}
+
+impl Parser {
+    pub fn parse(&mut self, lexem: Lexem) -> [Option<Token>; 2] {
+        if let Lexem::WhiteSpace(s) = lexem {
+            self.whitespace.push_str(s.as_str());
+            return [None, None];
         }
-        ValidateResult::Drop => {
-            whitespace.push_str(&token.whitespace_before);
-            [None, None]
-        }
-        ValidateResult::InsertBefore(lexem) => {
-            [Some(std::mem::replace(previous, token)), Some(lexem.into())]
+        let token = Token::new(lexem, std::mem::take(&mut self.whitespace));
+        match validate(&self.previous.lexem, &token.lexem) {
+            ValidateResult::Take => [Some(std::mem::replace(&mut self.previous, token)), None],
+            ValidateResult::DropBefore => {
+                let ws = std::mem::take(&mut self.previous.whitespace_before);
+                self.previous = token;
+                self.previous.whitespace_before.push_str(&ws);
+                [None, None]
+            }
+            ValidateResult::Drop => {
+                self.whitespace.push_str(&token.whitespace_before);
+                [None, None]
+            }
+            ValidateResult::InsertBefore(lexem) => [
+                Some(std::mem::replace(&mut self.previous, token)),
+                Some(lexem.into()),
+            ],
         }
     }
 }
