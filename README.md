@@ -16,9 +16,13 @@ So I came up with a simple program to fix manually edited json.
  - [x] correct colon (`{"a"=3} -> {"a":3}`)
  - [x] quote unknown values (`{a:3} -> {"a":3}`)
  - [x] async io
- - [ ] multithreading
+
+## 💡 Plans
+ - [ ] fix brackets (`{[()} -> {[()]}`)
  - [ ] convert numbers (`0xff -> 256`)
  - [ ] insert colon (`{b 4} -> {"b":4}`)
+ - [ ] multithreading
+ - [ ] COW (reduce memory usage)
 
 ## ✅ Pros
  - written in Rust => instant format on write
