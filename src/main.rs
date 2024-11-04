@@ -8,181 +8,193 @@ enum Paired {
     File,        // start, end
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-enum Quote {
-    Single,
-    Double,
-    Reversed,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-enum LexemType {
-    Escape,
-    String(Quote),
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum Lexem {
+    String(String),
     Open(Paired),
     Close(Paired),
     Comma,
     Colon,
-    Else(char),
+    Else(String),
+    WhiteSpace(String),
 }
 
-enum ParseResult<T> {
+enum ValidateResult<T> {
     Take,
     InsertBefore(T),
     Drop,
     DropBefore,
 }
 
-impl From<Quote> for char {
-    fn from(val: Quote) -> Self {
+impl From<Lexem> for String {
+    fn from(val: Lexem) -> Self {
         match val {
-            Quote::Single => '\'',
-            Quote::Double => '"',
-            Quote::Reversed => '`',
+            Lexem::Comma => ",".into(),
+            Lexem::Colon => ":".into(),
+            Lexem::Open(Paired::Bracket) => "[".into(),
+            Lexem::Close(Paired::Bracket) => "]".into(),
+            Lexem::Open(Paired::Brace) => "{".into(),
+            Lexem::Close(Paired::Brace) => "}".into(),
+            Lexem::Open(Paired::Parenthesis) => "(".into(),
+            Lexem::Close(Paired::Parenthesis) => ")".into(),
+            Lexem::Open(Paired::File) | Lexem::Close(Paired::File) => "".into(),
+            Lexem::Else(s) => s,
+            Lexem::String(s) => s,
+            Lexem::WhiteSpace(s) => s,
         }
     }
 }
 
-impl From<LexemType> for char {
-    fn from(val: LexemType) -> Self {
-        match val {
-            LexemType::Comma => ',',
-            LexemType::Colon => ':',
-            LexemType::Escape => '\\',
-            LexemType::Else(c) => c,
-            LexemType::Open(Paired::Bracket) => '[',
-            LexemType::Close(Paired::Bracket) => ']',
-            LexemType::Open(Paired::Brace) => '{',
-            LexemType::Close(Paired::Brace) => '}',
-            LexemType::Open(Paired::Parenthesis) => '(',
-            LexemType::Close(Paired::Parenthesis) => ')',
-            LexemType::String(quote) => quote.into(),
-            LexemType::Open(Paired::File) | LexemType::Close(Paired::File) => '\0',
+fn lexer(state: &mut Option<Lexem>, character: char) -> Option<Lexem> {
+    if let Some(Lexem::String(s)) = state {
+        let first_char = s.chars().next().unwrap_or_default();
+        let last_char = s.chars().last().unwrap_or_default();
+        s.push(character);
+        if last_char != '\\' && character == first_char {
+            return std::mem::take(state);
         }
+        return None;
     }
-}
-
-fn lexer(states: &mut Vec<LexemType>, character: char) -> LexemType {
-    let state = states
-        .last()
-        .cloned()
-        .unwrap_or(LexemType::Open(Paired::File));
-    match state {
-        LexemType::String(quote) => {
-            if character == quote.into() {
-                states.pop();
-            } else if character == '\\' {
-                states.push(LexemType::Escape);
+    let next = match character {
+        '(' => Lexem::Open(Paired::Parenthesis),
+        ')' => Lexem::Close(Paired::Parenthesis),
+        '[' => Lexem::Open(Paired::Bracket),
+        ']' => Lexem::Close(Paired::Bracket),
+        '{' => Lexem::Open(Paired::Brace),
+        '}' => Lexem::Close(Paired::Brace),
+        '\0' => Lexem::Close(Paired::File),
+        ',' => Lexem::Comma,
+        ':' => Lexem::Colon,
+        '"' | '\'' | '`' => {
+            return std::mem::replace(state, Some(Lexem::String(character.into())));
+        }
+        _ => {
+            if character.is_whitespace() {
+                if let Some(Lexem::WhiteSpace(s)) = state {
+                    s.push(character);
+                    return None;
+                }
+                Lexem::WhiteSpace(character.into())
+            } else {
+                if let Some(Lexem::Else(s)) = state {
+                    s.push(character);
+                    return None;
+                }
+                Lexem::Else(character.into())
             }
-            return LexemType::Else(character);
         }
-        LexemType::Escape => {
-            states.pop();
-            return state;
-        }
-        _ => {}
     };
-    let state = match character {
-        '(' => LexemType::Open(Paired::Parenthesis),
-        ')' => LexemType::Close(Paired::Parenthesis),
-        '[' => LexemType::Open(Paired::Bracket),
-        ']' => LexemType::Close(Paired::Bracket),
-        '{' => LexemType::Open(Paired::Brace),
-        '}' => LexemType::Close(Paired::Brace),
-        ',' => LexemType::Comma,
-        ':' => LexemType::Colon,
-        '"' => LexemType::String(Quote::Double),
-        '\'' => LexemType::String(Quote::Single),
-        '`' => LexemType::String(Quote::Reversed),
-        _ => LexemType::Else(character),
-    };
-    match state {
-        LexemType::Open(_) | LexemType::String(_) => {
-            states.push(state);
-        }
-        LexemType::Close(_) => {
-            states.pop();
-        }
-        _ => {}
-    }
-    state
+    std::mem::replace(state, Some(next))
 }
 
-fn parse(state: LexemType, lexem: LexemType) -> ParseResult<LexemType> {
-    match (state, lexem) {
-        (LexemType::Comma, LexemType::Close(_)) => ParseResult::DropBefore,
-        (LexemType::Colon, LexemType::Close(_)) => ParseResult::DropBefore,
-        (LexemType::Open(_), LexemType::Colon) => ParseResult::Drop,
-        (LexemType::Open(_), LexemType::Comma) => ParseResult::Drop,
-        (LexemType::Colon, LexemType::Colon) => ParseResult::Drop,
-        (LexemType::Comma, LexemType::Comma) => ParseResult::Drop,
-        (LexemType::Colon, LexemType::Comma) => ParseResult::DropBefore,
-        (LexemType::Comma, LexemType::Colon) => ParseResult::Drop,
-        (LexemType::Close(_), LexemType::Open(_)) => ParseResult::InsertBefore(LexemType::Colon),
-        _ => ParseResult::Take,
+struct Token {
+    lexem: Lexem,
+    whitespace_before: String,
+}
+
+impl Default for Token {
+    fn default() -> Self {
+        Self {
+            lexem: Lexem::Open(Paired::File),
+            whitespace_before: String::new(),
+        }
+    }
+}
+
+impl From<Lexem> for Token {
+    fn from(value: Lexem) -> Self {
+        Self {
+            lexem: value,
+            whitespace_before: String::new(),
+        }
+    }
+}
+
+fn validate(previous: &Lexem, lexem: &Lexem) -> ValidateResult<Lexem> {
+    match (previous, lexem) {
+        (Lexem::Comma, Lexem::Close(_)) => ValidateResult::DropBefore,
+        (Lexem::Colon, Lexem::Close(_)) => ValidateResult::DropBefore,
+        (Lexem::Open(_), Lexem::Colon) => ValidateResult::Drop,
+        (Lexem::Open(_), Lexem::Comma) => ValidateResult::Drop,
+        (Lexem::Colon, Lexem::Colon) => ValidateResult::Drop,
+        (Lexem::Comma, Lexem::Comma) => ValidateResult::Drop,
+        (Lexem::Colon, Lexem::Comma) => ValidateResult::DropBefore,
+        (Lexem::Comma, Lexem::Colon) => ValidateResult::Drop,
+        (Lexem::Close(_), Lexem::Close(_)) => ValidateResult::Take,
+        (Lexem::Close(_), Lexem::Comma) => ValidateResult::Take,
+        (Lexem::Close(_), Lexem::Colon) => ValidateResult::Drop,
+        (Lexem::Close(_), _) => ValidateResult::InsertBefore(Lexem::Comma),
+        (Lexem::Colon, Lexem::Open(_)) => ValidateResult::Take,
+        (Lexem::Comma, Lexem::Open(_)) => ValidateResult::Take,
+        (Lexem::Open(_), Lexem::Open(_)) => ValidateResult::Take,
+        (_, Lexem::Open(_)) => ValidateResult::InsertBefore(Lexem::Comma),
+        (Lexem::String(_), Lexem::String(_)) => ValidateResult::InsertBefore(Lexem::Comma),
+        (Lexem::Else(_), Lexem::String(_)) => ValidateResult::InsertBefore(Lexem::Comma),
+        (Lexem::String(_), Lexem::Else(_)) => ValidateResult::InsertBefore(Lexem::Comma),
+        (Lexem::Else(_), Lexem::Else(_)) => ValidateResult::InsertBefore(Lexem::Comma),
+        _ => ValidateResult::Take,
     }
 }
 
 fn process(content: &str) -> String {
-    let mut result = String::new();
-    let mut states = Vec::new();
-    let mut state = LexemType::Open(Paired::File);
-    for character in content.chars() {
-        let mut lexem = lexer(&mut states, character);
+    let mut state = None;
+    let mut states: Vec<Token> = Vec::new();
+    let mut whitespace = String::new();
+    for character in content.chars().chain(Some('\0')) {
+        let lexem = lexer(&mut state, character);
+        if lexem.is_none() {
+            continue;
+        }
+        let lexem = lexem.unwrap();
+        if let Lexem::WhiteSpace(s) = lexem {
+            whitespace.push_str(s.as_str());
+            continue;
+        }
+        let mut token = Token {
+            lexem,
+            whitespace_before: std::mem::take(&mut whitespace),
+        };
         loop {
-            match parse(state, lexem) {
-                ParseResult::Take => {
-                    if state != LexemType::Open(Paired::File) {
-                        result.push(state.into());
-                    }
-                    state = lexem;
+            let previous = states.pop().unwrap_or_default();
+            match validate(&previous.lexem, &token.lexem) {
+                ValidateResult::Take => {
+                    states.push(previous);
+                    states.push(token);
                     break;
                 }
-                ParseResult::Drop => {
+                ValidateResult::DropBefore => {
+                    token
+                        .whitespace_before
+                        .push_str(&previous.whitespace_before);
+                    states.push(token);
                     break;
                 }
-                ParseResult::DropBefore => {
-                    state = lexem;
+                ValidateResult::Drop => {
+                    whitespace.push_str(&token.whitespace_before);
+                    states.push(previous);
                     break;
                 }
-                ParseResult::InsertBefore(insert) => {
-                    lexem = insert;
+                ValidateResult::InsertBefore(lexem) => {
+                    states.push(previous);
+                    states.push(lexem.into());
                 }
             }
         }
     }
-    let mut lexem = LexemType::Close(Paired::File);
-    loop {
-        match parse(state, lexem) {
-            ParseResult::Take => {
-                if state != LexemType::Open(Paired::File) && state != LexemType::Close(Paired::File)
-                {
-                    result.push(state.into());
-                }
-                break;
-            }
-            ParseResult::Drop | ParseResult::DropBefore => {
-                break;
-            }
-            ParseResult::InsertBefore(insert) => {
-                lexem = insert;
-            }
-        }
+    let mut result = String::new();
+    for token in states {
+        result.push_str(&token.whitespace_before);
+        let string: String = token.lexem.into();
+        result.push_str(string.as_str());
     }
     result
 }
 
 fn main() {
-    let mut reader = stdin();
     let mut content = String::new();
-    if let Err(error) = reader.read_to_string(&mut content) {
-        eprintln!("{error}");
-        return;
-    }
+    stdin().read_to_string(&mut content).unwrap();
     let processed = process(content.as_str());
-    if let Err(error) = stdout().write_all(processed.as_bytes()) {
-        eprintln!("{error}");
-    }
+    stdout().write_all(processed.as_bytes()).unwrap();
 }
 
 #[cfg(test)]
@@ -213,5 +225,11 @@ mod tests {
     #[test]
     fn remove_comma_and_colon() {
         assert_eq!("", process(r#":,:::,,,:,,:::"#));
+    }
+
+    #[test]
+    fn insert_comma() {
+        assert_eq!("[],[]", process("[][]"));
+        assert_eq!("1, 2", process("1 2"));
     }
 }
