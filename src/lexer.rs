@@ -45,8 +45,8 @@ fn fix_else(s: &str) -> String {
     }
 }
 
-impl From<&Lexem> for String {
-    fn from(val: &Lexem) -> Self {
+impl From<Lexem> for String {
+    fn from(val: Lexem) -> Self {
         match val {
             Lexem::Comma => ",".into(),
             Lexem::Colon => ":".into(),
@@ -59,7 +59,7 @@ impl From<&Lexem> for String {
             Lexem::Open(Paired::File) | Lexem::Close(Paired::File) => "".into(),
             Lexem::Else(s) => fix_else(&s),
             Lexem::String(s) => fix_str(s.get(1..s.len() - 1).unwrap_or_default()),
-            Lexem::WhiteSpace(s) => s.clone(),
+            Lexem::WhiteSpace(s) => s,
         }
     }
 }

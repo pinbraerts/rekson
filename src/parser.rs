@@ -33,9 +33,9 @@ impl Default for Token {
     }
 }
 
-impl From<&Token> for String {
-    fn from(value: &Token) -> Self {
-        value.whitespace_before.clone() + &Into::<String>::into(&value.lexem)
+impl From<Token> for String {
+    fn from(value: Token) -> Self {
+        value.whitespace_before.clone() + &Into::<String>::into(value.lexem)
     }
 }
 
@@ -62,5 +62,29 @@ pub fn validate(previous: &Lexem, lexem: &Lexem) -> ValidateResult<Lexem> {
         (Lexem::String(_), Lexem::Else(_)) => ValidateResult::InsertBefore(Lexem::Comma),
         (Lexem::Else(_), Lexem::Else(_)) => ValidateResult::InsertBefore(Lexem::Comma),
         _ => ValidateResult::Take,
+    }
+}
+
+pub fn parse(previous: &mut Token, whitespace: &mut String, lexem: Lexem) -> [Option<Token>; 2] {
+    if let Lexem::WhiteSpace(s) = lexem {
+        whitespace.push_str(s.as_str());
+        return [None, None];
+    }
+    let token = Token::new(lexem, std::mem::take(whitespace));
+    match validate(&previous.lexem, &token.lexem) {
+        ValidateResult::Take => [Some(std::mem::replace(previous, token)), None],
+        ValidateResult::DropBefore => {
+            let ws = std::mem::take(&mut previous.whitespace_before);
+            *previous = token;
+            previous.whitespace_before.push_str(&ws);
+            [None, None]
+        }
+        ValidateResult::Drop => {
+            whitespace.push_str(&token.whitespace_before);
+            [None, None]
+        }
+        ValidateResult::InsertBefore(lexem) => {
+            [Some(std::mem::replace(previous, token)), Some(lexem.into())]
+        }
     }
 }
