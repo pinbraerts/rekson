@@ -1,34 +1,48 @@
-use std::io::{stdin, stdout, Read, Write};
-
-use lexer::Lexer;
-use parser::Parser;
+pub mod chunks;
 pub mod lexer;
 pub mod parser;
 
-fn process(content: &str) -> String {
+use std::io::{stdin, stdout, BufReader, BufWriter, Write};
+
+use chunks::ChunkReader;
+use lexer::Lexer;
+use parser::Parser;
+
+fn process_streams<In, Out>(reader: BufReader<In>, writer: &mut BufWriter<Out>, chunk_size: usize)
+where
+    In: std::io::Read,
+    Out: std::io::Write,
+{
     let mut lexer = Lexer::default();
     let mut parser = Parser::default();
-    content
-        .chars()
+    ChunkReader::new(reader, chunk_size)
+        .flatten()
+        .map(|c| c as char)
         .chain(Some('\0'))
         .filter_map(|c| lexer.process(c))
         .chain(Some(Default::default()))
         .flat_map(|l| parser.parse(l))
         .flatten()
         .map(Into::<String>::into)
-        .collect()
+        .for_each(|s| writer.write_all(s.as_bytes()).unwrap());
 }
 
 fn main() {
-    let mut content = String::new();
-    stdin().read_to_string(&mut content).unwrap();
-    let processed = process(content.as_str());
-    stdout().write_all(processed.as_bytes()).unwrap();
+    let reader = BufReader::new(stdin());
+    let mut writer = BufWriter::new(stdout());
+    process_streams(reader, &mut writer, 256);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn process(content: &str) -> String {
+        let reader = BufReader::new(content.as_bytes());
+        let mut writer = BufWriter::new(Vec::new());
+        process_streams(reader, &mut writer, 256);
+        String::from_utf8(writer.into_inner().unwrap()).unwrap()
+    }
 
     #[test]
     fn empty() {
