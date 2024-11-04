@@ -29,7 +29,12 @@ enum ValidateResult<T> {
 fn fix_str(s: &str) -> String {
     Some('\"')
         .into_iter()
-        .chain(s.escape_default())
+        .chain(
+            s.replace('\n', r"\n")
+                .replace("\\\"", "\"")
+                .replace('"', "\\\"")
+                .chars(),
+        )
         .chain(Some('\"'))
         .collect()
 }
@@ -259,8 +264,8 @@ mod tests {
     #[test]
     fn fix_string() {
         assert_eq!(
-            "\"some\\nmultiline\\nstring\"",
-            process("'some\nmultiline\nstring'")
+            "\"some\\nmultiline\\nstring\", \"\\\"some\\nescaped\\nstring\"",
+            process("'some\nmultiline\nstring', '\"some\\nescaped\\nstring'")
         );
     }
 
