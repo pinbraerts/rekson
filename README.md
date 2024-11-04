@@ -11,9 +11,10 @@ Here is a simple program to fix manually edited json.
  - [x] comma between values (`[1 2] -> [1, 2]`)
  - [x] correct quotes (```{`key`: 'value'} -> {"key": "value"}```)
  - [x] multiline strings
+ - [x] correct booleans (`True -> true`)
+ - [x] correct nulls (`None -> null`)
+ - [ ] convert numbers (`0xff -> 256`)
  - [ ] insert/correct colon (`{"a"=3 "b" 4} -> {"a":3,"b":4}`)
- - [ ] correct booleans (`True -> true`)
- - [ ] correct nulls (`None -> null`)
  - [ ] async io
 
 ## Pros

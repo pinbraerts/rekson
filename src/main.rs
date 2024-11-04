@@ -34,6 +34,21 @@ fn fix_str(s: &str) -> String {
         .collect()
 }
 
+fn fix_else(s: &str) -> String {
+    match s.to_lowercase().as_str() {
+        "null" | "nil" | "nul" | "none" => "null".into(),
+        "true" => "true".into(),
+        "false" => "false".into(),
+        &_ => {
+            if s.chars().all(|c| c.is_numeric()) {
+                s.into()
+            } else {
+                fix_str(s)
+            }
+        }
+    }
+}
+
 impl From<Lexem> for String {
     fn from(val: Lexem) -> Self {
         match val {
@@ -46,7 +61,7 @@ impl From<Lexem> for String {
             Lexem::Open(Paired::Parenthesis) => "(".into(),
             Lexem::Close(Paired::Parenthesis) => ")".into(),
             Lexem::Open(Paired::File) | Lexem::Close(Paired::File) => "".into(),
-            Lexem::Else(s) => s,
+            Lexem::Else(s) => fix_else(&s),
             Lexem::String(s) => fix_str(s.get(1..s.len() - 1).unwrap_or_default()),
             Lexem::WhiteSpace(s) => s,
         }
@@ -246,6 +261,14 @@ mod tests {
         assert_eq!(
             "\"some\\nmultiline\\nstring\"",
             process("'some\nmultiline\nstring'")
+        );
+    }
+
+    #[test]
+    fn fix_value() {
+        assert_eq!(
+            "null, null, null, true, false",
+            process("nil nul None TruE False")
         );
     }
 }
