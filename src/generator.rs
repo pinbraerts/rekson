@@ -25,6 +25,7 @@ fn generate_type(depth: usize, random: &mut impl RngCore) -> ValueType {
             ValueType::String,
             ValueType::Number,
             ValueType::Object,
+            ValueType::Array,
             ValueType::Bool,
             ValueType::Null,
         ]
@@ -32,15 +33,20 @@ fn generate_type(depth: usize, random: &mut impl RngCore) -> ValueType {
     choose[random.gen_range(0..choose.len())]
 }
 
-fn generate_value(depth: usize, random: &mut impl RngCore) -> String {
+fn generate_value(length: usize, depth: usize, random: &mut impl RngCore) -> String {
     let value_type = generate_type(depth, random);
-    generate(depth, value_type, random)
+    generate(length, depth, value_type, random)
 }
 
-fn generate(depth: usize, value_type: ValueType, random: &mut impl RngCore) -> String {
+fn generate(
+    length: usize,
+    depth: usize,
+    value_type: ValueType,
+    random: &mut impl RngCore,
+) -> String {
     match value_type {
         ValueType::String => {
-            let len = random.gen_range((if depth == 0 { 0 } else { 1 })..20);
+            let len = random.gen_range((if depth == 0 { 0 } else { 1 })..length);
             let string: String = random
                 .sample_iter(Alphanumeric)
                 .take(len)
@@ -50,11 +56,11 @@ fn generate(depth: usize, value_type: ValueType, random: &mut impl RngCore) -> S
         }
         ValueType::Number => random.gen::<i32>().to_string(),
         ValueType::Object => {
-            let len = random.gen_range(0..20);
+            let len = random.gen_range(0..length);
             let content = (0..len)
                 .map(|_| {
-                    let key = generate(1, ValueType::String, random);
-                    let value = generate_value(depth - 1, random);
+                    let key = generate(length, 1, ValueType::String, random);
+                    let value = generate_value(length, depth - 1, random);
                     format!("{key}:{value}")
                 })
                 .collect::<Vec<_>>()
@@ -62,9 +68,9 @@ fn generate(depth: usize, value_type: ValueType, random: &mut impl RngCore) -> S
             format!("{{{content}}}")
         }
         ValueType::Array => {
-            let len = random.gen_range(0..20);
+            let len = random.gen_range(0..length);
             let content = (0..len)
-                .map(|_| generate_value(depth - 1, random))
+                .map(|_| generate_value(length, depth - 1, random))
                 .collect::<Vec<String>>()
                 .join(", ");
             format!("[{content}]")
@@ -85,6 +91,9 @@ struct Args {
 
     #[arg(short = 'd', long = "depth", default_value_t = 10)]
     pub max_depth: usize,
+
+    #[arg(short = 'l', long = "length", default_value_t = 10)]
+    pub max_length: usize,
 }
 
 fn main() {
@@ -95,7 +104,12 @@ fn main() {
         .for_each(|(i, v)| *v = ((args.seed >> i) & 0xff) as u8);
     let seed = seed;
     let mut random = rand::rngs::SmallRng::from_seed(seed);
-    let value = generate(args.max_depth, args.value_type, &mut random);
+    let value = generate(
+        args.max_length,
+        args.max_depth,
+        args.value_type,
+        &mut random,
+    );
     println!("{value}")
 }
 
@@ -106,7 +120,7 @@ mod tests {
     #[test]
     fn valid() {
         let mut random = rand::rngs::SmallRng::from_entropy();
-        let value = generate(10, ValueType::Object, &mut random);
+        let value = generate(10, 10, ValueType::Object, &mut random);
         print!("{value}");
         json::parse(&value).expect("valid json");
     }
