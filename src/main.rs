@@ -26,6 +26,14 @@ enum ValidateResult<T> {
     DropBefore,
 }
 
+fn fix_str(s: &str) -> String {
+    Some('\"')
+        .into_iter()
+        .chain(s.escape_default())
+        .chain(Some('\"'))
+        .collect()
+}
+
 impl From<Lexem> for String {
     fn from(val: Lexem) -> Self {
         match val {
@@ -39,7 +47,7 @@ impl From<Lexem> for String {
             Lexem::Close(Paired::Parenthesis) => ")".into(),
             Lexem::Open(Paired::File) | Lexem::Close(Paired::File) => "".into(),
             Lexem::Else(s) => s,
-            Lexem::String(s) => s,
+            Lexem::String(s) => fix_str(s.get(1..s.len() - 1).unwrap_or_default()),
             Lexem::WhiteSpace(s) => s,
         }
     }
@@ -231,5 +239,13 @@ mod tests {
     fn insert_comma() {
         assert_eq!("[],[]", process("[][]"));
         assert_eq!("1, 2", process("1 2"));
+    }
+
+    #[test]
+    fn fix_string() {
+        assert_eq!(
+            "\"some\\nmultiline\\nstring\"",
+            process("'some\nmultiline\nstring'")
+        );
     }
 }

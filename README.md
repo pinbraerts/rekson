@@ -9,9 +9,9 @@ Here is a simple program to fix manually edited json.
 ## Features
  - [x] trailing comma (`{"a":3,} -> {"a":3}`)
  - [x] comma between values (`[1 2] -> [1, 2]`)
- - [ ] insert/correct colon (`{a=3 b 4} -> {"a":3,"b":4}`)
- - [ ] multiline strings
- - [ ] correct quotes (`{key: 'value'} -> {"key": "value"}`)
+ - [x] correct quotes (```{`key`: 'value'} -> {"key": "value"}```)
+ - [x] multiline strings
+ - [ ] insert/correct colon (`{"a"=3 "b" 4} -> {"a":3,"b":4}`)
  - [ ] correct booleans (`True -> true`)
  - [ ] correct nulls (`None -> null`)
  - [ ] async io
