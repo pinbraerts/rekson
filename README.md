@@ -1,12 +1,12 @@
-# rekson
+# 🛠️ rekson
 rectify your json
 
-## Motivation
+## 🍎 Motivation
 I frequently edit json.
 This is a language with poorly written grammar, which makes it completely unusable.
 Here is a simple program to fix manually edited json.
 
-## Features
+## ✨ Features
  - [x] trailing comma (`{"a":3,} -> {"a":3}`)
  - [x] comma between values (`[1 2] -> [1, 2]`)
  - [x] correct quotes (```{`key`: 'value'} -> {"key": "value"}```)
@@ -18,20 +18,20 @@ Here is a simple program to fix manually edited json.
  - [ ] insert colon (`{b 4} -> {"b":4}`)
  - [ ] async io
 
-## Pros
- - written in Rust => instant save on write
- - no dependencies => faster to build than to install some npm packages
+## ✅ Pros
+ - written in Rust => instant format on write
+ - no dependencies => faster to build than to install an npm package
  - can be used as standalone executable
  - can be used as standalone library
 
-## Cons
+## ❌ Cons
  - barebone simplicity => adding new features requires rethinking the architecture
  - this is not a formatter (intended to use in conjunction with one, for example [`jq`](https://github.com/jqlang/jq))
  - single-threaded blocking stdin and stdout (for now)
  - no configuration/cli params (for now)
  - small testsuite (for now)
 
-## Alternatives
+## 👀 Alternatives
   - https://github.com/adhocore/php-json-fixer
   - https://github.com/rhysd/fixjson
   - https://github.com/Berkmann18/json-fixer
