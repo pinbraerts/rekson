@@ -13,8 +13,9 @@ Here is a simple program to fix manually edited json.
  - [x] multiline strings
  - [x] correct booleans (`True -> true`)
  - [x] correct nulls (`None -> null`)
+ - [x] correct colon (`{a=3} -> {"a":3}`)
  - [ ] convert numbers (`0xff -> 256`)
- - [ ] insert/correct colon (`{"a"=3 "b" 4} -> {"a":3,"b":4}`)
+ - [ ] insert colon (`{b 4} -> {"b":4}`)
  - [ ] async io
 
 ## Pros

@@ -92,7 +92,7 @@ fn lexer(state: &mut Option<Lexem>, character: char) -> Option<Lexem> {
         '}' => Lexem::Close(Paired::Brace),
         '\0' => Lexem::Close(Paired::File),
         ',' => Lexem::Comma,
-        ':' => Lexem::Colon,
+        ':' | '=' => Lexem::Colon,
         '"' | '\'' | '`' => {
             return std::mem::replace(state, Some(Lexem::String(character.into())));
         }
@@ -242,17 +242,17 @@ mod tests {
 
     #[test]
     fn remove_comma() {
-        assert_eq!(r#"{"a":3,"b": 4}"#, process(r#"{,"a":3,"b": 4,}"#))
+        assert_eq!(r#"{"a":3,"b": 4}"#, process(r#"{,"a":3,"b"= 4,}"#))
     }
 
     #[test]
     fn remove_colon() {
-        assert_eq!(r#"{"a":3,"b": 4}"#, process(r#"{:"a":3,"b": 4:}"#))
+        assert_eq!(r#"{"a":3,"b": 4}"#, process(r#"{:"a"=3,"b": 4:}"#))
     }
 
     #[test]
     fn remove_comma_and_colon() {
-        assert_eq!("", process(r#":,:::,,,:,,:::"#));
+        assert_eq!("", process(r#":,:=:,,,:,,::="#));
     }
 
     #[test]
