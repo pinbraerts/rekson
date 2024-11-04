@@ -2,14 +2,18 @@
 rectify your json
 
 ## Motivation
-I frequently edit json. This is a language with poorly written grammar, which makes it completely unusable. This is a simple program to fix manually edited json.
+I frequently edit json.
+This is a language with poorly written grammar, which makes it completely unusable.
+Here is a simple program to fix manually edited json.
 
 ## Features
  - [x] trailing comma (`{"a":3,} -> {"a":3}`)
  - [x] comma between values (`[1 2] -> [1, 2]`)
+ - [ ] insert/correct colon (`{a=3 b 4} -> {"a":3,"b":4}`)
  - [ ] multiline strings
- - [ ] correct quotes (`key: 'value' -> "key": "value"`)
+ - [ ] correct quotes (`{key: 'value'} -> {"key": "value"}`)
  - [ ] correct booleans (`True -> true`)
+ - [ ] correct nulls (`None -> null`)
  - [ ] async io
 
 ## Pros
