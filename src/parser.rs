@@ -1,12 +1,5 @@
 use crate::lexer::{Lexem, Paired};
 
-pub enum Validate<T> {
-    Take,
-    Insert(T),
-    Drop,
-    DropBefore,
-}
-
 #[derive(Debug)]
 pub struct Token {
     pub lexem: Lexem,
@@ -40,7 +33,14 @@ impl From<Token> for String {
     }
 }
 
-pub fn validate(previous: &Lexem, lexem: &Lexem) -> Validate<Lexem> {
+pub enum Validate {
+    Take,
+    Insert(Token),
+    Drop,
+    DropBefore,
+}
+
+pub fn validate(previous: &Lexem, lexem: &Lexem) -> Validate {
     match (previous, lexem) {
         (Lexem::Comma, Lexem::Close(_)) => Validate::DropBefore,
         (Lexem::Colon, Lexem::Close(_)) => Validate::DropBefore,
@@ -53,15 +53,15 @@ pub fn validate(previous: &Lexem, lexem: &Lexem) -> Validate<Lexem> {
         (Lexem::Close(_), Lexem::Close(_)) => Validate::Take,
         (Lexem::Close(_), Lexem::Comma) => Validate::Take,
         (Lexem::Close(_), Lexem::Colon) => Validate::Drop,
-        (Lexem::Close(_), _) => Validate::Insert(Lexem::Comma),
+        (Lexem::Close(_), _) => Validate::Insert(Lexem::Comma.into()),
         (Lexem::Colon, Lexem::Open(_)) => Validate::Take,
         (Lexem::Comma, Lexem::Open(_)) => Validate::Take,
         (Lexem::Open(_), Lexem::Open(_)) => Validate::Take,
-        (_, Lexem::Open(_)) => Validate::Insert(Lexem::Comma),
-        (Lexem::String(_), Lexem::String(_)) => Validate::Insert(Lexem::Comma),
-        (Lexem::Else(_), Lexem::String(_)) => Validate::Insert(Lexem::Comma),
-        (Lexem::String(_), Lexem::Else(_)) => Validate::Insert(Lexem::Comma),
-        (Lexem::Else(_), Lexem::Else(_)) => Validate::Insert(Lexem::Comma),
+        (_, Lexem::Open(_)) => Validate::Insert(Lexem::Comma.into()),
+        (Lexem::String(_), Lexem::String(_)) => Validate::Insert(Lexem::Comma.into()),
+        (Lexem::Else(_), Lexem::String(_)) => Validate::Insert(Lexem::Comma.into()),
+        (Lexem::String(_), Lexem::Else(_)) => Validate::Insert(Lexem::Comma.into()),
+        (Lexem::Else(_), Lexem::Else(_)) => Validate::Insert(Lexem::Comma.into()),
         _ => Validate::Take,
     }
 }
@@ -79,25 +79,23 @@ impl Parser {
             self.whitespace.push_str(s.as_str());
             return result;
         }
-        let token = Token::new(lexem, std::mem::take(&mut self.whitespace));
-        loop {
+        let mut tokens = vec![Token::new(lexem, std::mem::take(&mut self.whitespace))];
+        while let Some(token) = tokens.pop() {
             match validate(&self.previous.lexem, &token.lexem) {
                 Validate::Take => {
                     result.push(std::mem::replace(&mut self.previous, token));
-                    break;
                 }
                 Validate::DropBefore => {
                     let ws = std::mem::take(&mut self.previous.whitespace_before);
                     self.previous = token;
                     self.previous.whitespace_before.push_str(&ws);
-                    break;
                 }
                 Validate::Drop => {
                     self.whitespace.push_str(&token.whitespace_before);
-                    break;
                 }
-                Validate::Insert(lexem) => {
-                    result.push(std::mem::replace(&mut self.previous, lexem.into()));
+                Validate::Insert(insert) => {
+                    tokens.push(token);
+                    tokens.push(insert);
                 }
             }
         }
