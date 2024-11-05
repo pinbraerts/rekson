@@ -73,28 +73,34 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn parse(&mut self, lexem: Lexem) -> [Option<Token>; 2] {
+    pub fn parse(&mut self, lexem: Lexem) -> Vec<Token> {
+        let mut result = Vec::new();
         if let Lexem::WhiteSpace(s) = lexem {
             self.whitespace.push_str(s.as_str());
-            return [None, None];
+            return result;
         }
         let token = Token::new(lexem, std::mem::take(&mut self.whitespace));
-        match validate(&self.previous.lexem, &token.lexem) {
-            ValidateResult::Take => [Some(std::mem::replace(&mut self.previous, token)), None],
-            ValidateResult::DropBefore => {
-                let ws = std::mem::take(&mut self.previous.whitespace_before);
-                self.previous = token;
-                self.previous.whitespace_before.push_str(&ws);
-                [None, None]
+        loop {
+            match validate(&self.previous.lexem, &token.lexem) {
+                ValidateResult::Take => {
+                    result.push(std::mem::replace(&mut self.previous, token));
+                    break;
+                }
+                ValidateResult::DropBefore => {
+                    let ws = std::mem::take(&mut self.previous.whitespace_before);
+                    self.previous = token;
+                    self.previous.whitespace_before.push_str(&ws);
+                    break;
+                }
+                ValidateResult::Drop => {
+                    self.whitespace.push_str(&token.whitespace_before);
+                    break;
+                }
+                ValidateResult::InsertBefore(lexem) => {
+                    result.push(std::mem::replace(&mut self.previous, lexem.into()));
+                }
             }
-            ValidateResult::Drop => {
-                self.whitespace.push_str(&token.whitespace_before);
-                [None, None]
-            }
-            ValidateResult::InsertBefore(lexem) => [
-                Some(std::mem::replace(&mut self.previous, token)),
-                Some(lexem.into()),
-            ],
         }
+        result
     }
 }

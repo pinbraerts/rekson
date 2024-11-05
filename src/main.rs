@@ -22,8 +22,7 @@ where
         .filter_map(|c| lexer.process(c))
         .chain(Some(Default::default()))
         .flat_map(|l| parser.parse(l))
-        .flatten()
-        .map(Into::<String>::into)
+        .map(String::from)
         .for_each(|s| writer.write_all(s.as_bytes()).unwrap());
 }
 
