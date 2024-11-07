@@ -1,9 +1,8 @@
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Paired {
-    Parenthesis, // ()
-    Bracket,     // []
-    Brace,       // {}
-    File,        // start, end
+    Bracket, // []
+    Brace,   // {}
+    File,    // start, end
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -60,8 +59,6 @@ impl From<Lexem> for String {
             Lexem::Close(Paired::Bracket) => "]".into(),
             Lexem::Open(Paired::Brace) => "{".into(),
             Lexem::Close(Paired::Brace) => "}".into(),
-            Lexem::Open(Paired::Parenthesis) => "(".into(),
-            Lexem::Close(Paired::Parenthesis) => ")".into(),
             Lexem::Open(Paired::File) | Lexem::Close(Paired::File) => "".into(),
             Lexem::Else(s) => fix_else(&s),
             Lexem::String(s) => fix_str(s.get(1..s.len() - 1).unwrap_or_default()),
@@ -87,8 +84,6 @@ impl Lexer {
             return None;
         }
         let next = match character {
-            '(' => Lexem::Open(Paired::Parenthesis),
-            ')' => Lexem::Close(Paired::Parenthesis),
             '[' => Lexem::Open(Paired::Bracket),
             ']' => Lexem::Close(Paired::Bracket),
             '{' => Lexem::Open(Paired::Brace),

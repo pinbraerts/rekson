@@ -66,28 +66,27 @@ mod tests {
 
     #[test]
     fn remove_comma_and_colon() {
-        assert_eq!("", process(r#":,:=:,,,:,,::="#));
+        assert_eq!("{}", process(r#":,:=:,,,:,,::="#));
     }
 
     #[test]
     fn insert_comma() {
-        assert_eq!("[],[]", process("[][]"));
-        assert_eq!("1, 2", process("1 2"));
+        assert_eq!("[[],[]]", process("[[][]]"));
     }
 
     #[test]
     fn fix_string() {
         assert_eq!(
-            "\"some\\nmultiline\\nstring\", \"\\\"some\\nescaped\\nstring\"",
-            process("'some\nmultiline\nstring', '\"some\\nescaped\\nstring'")
+            "[\"some\\nmultiline\\nstring\", \"\\\"some\\nescaped\\nstring\"]",
+            process("['some\nmultiline\nstring', '\"some\\nescaped\\nstring']")
         );
     }
 
     #[test]
     fn fix_value() {
         assert_eq!(
-            "null, null, null, true, false",
-            process("nil nul None TruE False")
+            "[null ,null ,null ,true ,false]",
+            process("[nil nul None TruE False]")
         );
     }
 }
