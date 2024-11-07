@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn fix_value() {
         assert_eq!(
-            "[null ,null ,null ,true ,false]",
+            "[null, null, null, true, false]",
             process("[nil nul None TruE False]")
         );
     }

@@ -136,11 +136,11 @@ impl Parser {
             self.whitespace.push_str(s.as_str());
             return result;
         }
-        let mut lexems = vec![lexem];
-        while let Some(lexem) = lexems.pop() {
+        let mut tokens = vec![Token::new(lexem, std::mem::take(&mut self.whitespace))];
+        while let Some(token) = tokens.pop() {
             match validate(
                 self.states.last().cloned().unwrap_or_default(),
-                lexem.clone(),
+                token.lexem.clone(),
             ) {
                 Validate::Push(state) => {
                     self.states.push(state);
@@ -151,12 +151,12 @@ impl Parser {
                 }
                 Validate::Pop => {
                     self.states.pop();
-                    lexems.push(lexem);
+                    tokens.push(token);
                     continue;
                 }
                 Validate::Insert(insert) => {
-                    lexems.push(lexem);
-                    lexems.push(insert);
+                    tokens.push(token);
+                    tokens.push(insert.into());
                     continue;
                 }
                 Validate::Drop => {
@@ -170,7 +170,7 @@ impl Parser {
                     continue;
                 }
             };
-            result.push(Token::new(lexem, std::mem::take(&mut self.whitespace)));
+            result.push(token);
         }
         if let Some(token) = std::mem::take(&mut self.delay) {
             result.insert(0, token);
