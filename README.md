@@ -21,6 +21,7 @@ This is not a formatter, rather it is intended to be used in conjunction with on
  - [x] async io
 
 ## 💡 Plans
+ - [ ] strip comments
  - [ ] convert numbers (`0xff -> 256`)
  - [ ] COW (reduce memory copying)
  - [ ] multithreading
