@@ -6,12 +6,3 @@ edition = "2021"
 [[bin]]
 name = "rekson"
 path = "src/main.rs"
-
-[[bin]]
-name = "generator"
-path = "src/generator.rs"
-
-[dependencies]
-clap = { version = "4.5.20", features = ["derive"] }
-json = "0.12.4"
-rand = { version = "0.8.5", features = ["small_rng"] }
