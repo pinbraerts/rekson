@@ -76,7 +76,7 @@ impl From<Paired> for State {
 fn validate(state: State, lexem: Lexem) -> Validate {
     match state {
         State::File => match lexem {
-            Lexem::Close(Paired::File) => Validate::Drop,
+            Lexem::Close(Paired::File) => Validate::Take(state),
             Lexem::Open(paired) => Validate::Take(paired.into()),
             _ => Validate::Insert(Lexem::Open(Paired::Brace)),
         },
@@ -131,7 +131,6 @@ fn validate(state: State, lexem: Lexem) -> Validate {
 impl Parser {
     pub fn parse(&mut self, lexem: Lexem) -> Vec<Token> {
         let mut result = Vec::new();
-        let last = matches!(lexem, Lexem::Close(Paired::File));
         if let Lexem::WhiteSpace(s) = lexem {
             self.whitespace.push_str(s.as_str());
             return result;
@@ -170,13 +169,7 @@ impl Parser {
                     continue;
                 }
             };
-            result.push(token);
-        }
-        if let Some(token) = std::mem::take(&mut self.delay) {
-            result.insert(0, token);
-        }
-        if !last {
-            self.delay = result.pop();
+            result.extend(std::mem::replace(&mut self.delay, Some(token)));
         }
         result
     }
