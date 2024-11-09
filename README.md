@@ -1,4 +1,4 @@
-# 🛠️ rekson
+# ⚡ rekson
 rectify your json
 
 ## 🍎 Motivation
@@ -54,6 +54,25 @@ cargo install --git https://github.com/pinbraerts/rekson
 
 ### Binary
 Prebuilt binaries can be found at the [releases](https://github.com/pinbraerts/rekson/releases) page.
+
+## 🛠️ Usage
+
+Pass dirty json to stdin, receive fixed json in stdout.
+
+### [conform.nvim](https://github.com/stevearc/conform.nvim)
+
+```lua
+require("conform").setup({
+  formatters = {
+    rekson = {
+      command = "rekson",
+    },
+  },
+  formatters_by_ft = {
+    json = { "rekson" },
+  })
+})
+```
 
 ## 👀 Alternatives
   - https://github.com/adhocore/php-json-fixer
