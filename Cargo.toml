@@ -2,6 +2,13 @@
 name = "rekson"
 version = "0.0.1"
 edition = "2021"
+license = "MIT"
+description = "A simple standalone to rectify json"
+homepage = "https://github.com/pinbraerts/rekson"
+repository = "https://github.com/pinbraerts/rekson"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["json", "fix-json", "bad-json", "dirty-json"]
 
 [[bin]]
 name = "rekson"
