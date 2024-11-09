@@ -40,6 +40,21 @@ for example [`jq`](https://github.com/jqlang/jq).
  - no configuration (for now)
  - small testsuite (for now)
 
+## 🚀 Installation
+
+### crates.io
+```bash
+cargo install rekson
+```
+
+### From source
+```bash
+cargo install --git https://github.com/pinbraerts/rekson
+```
+
+### Binary
+Prebuilt binaries can be found at the [releases](https://github.com/pinbraerts/rekson/releases) page.
+
 ## 👀 Alternatives
   - https://github.com/adhocore/php-json-fixer
   - https://github.com/rhysd/fixjson
