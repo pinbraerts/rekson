@@ -5,7 +5,8 @@ rectify your json
 I frequently edit [json](https://json.org) files.
 It is a completely unusable configuration language with poorly written grammar.
 So I came up with a simple program to fix manually edited json.
-This is not a formatter, rather it is intended to be used in conjunction with one, for example [`jq`](https://github.com/jqlang/jq)).
+This is not a formatter, rather it is intended to be used in conjunction with one,
+for example [`jq`](https://github.com/jqlang/jq)).
 
 ## ✨ Features
  - [x] trailing comma (`{,"a":3,} -> {"a":3}`)
