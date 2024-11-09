@@ -10,17 +10,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
 
+  format:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: Formatting check
+    - name: Check formatting
       run: cargo fmt --check --verbose
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Lint
+      run: cargo clippy --verbose -- --deny warnings
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
     - name: Build
       run: cargo build --verbose
-    - name: Lint check
-      run: cargo clippy --verbose
     - name: Run tests
       run: cargo test --verbose
