@@ -20,7 +20,7 @@ where
         .map(|c| c as char)
         .chain(Some('\0'))
         .filter_map(|c| lexer.process(c))
-        .chain(Some(Default::default()))
+        .chain([Default::default(), Default::default()])
         .flat_map(|l| parser.parse(l))
         .map(String::from)
         .for_each(|s| writer.write_all(s.as_bytes()).unwrap());
@@ -103,5 +103,13 @@ mod tests {
     #[test]
     fn fix_brackets() {
         assert_eq!("{[{[{}]}]}", process("{[{[{]]"));
+    }
+
+    #[test]
+    fn preserve_whitespaces() {
+        assert_eq!(
+            " [  1,   2,\n\t  3     ]\n\t\t\r\n",
+            process(" [  1,   2,\n\t  3     ]\n\t\t\r\n")
+        );
     }
 }
