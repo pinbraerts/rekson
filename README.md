@@ -42,12 +42,12 @@ for example [`jq`](https://github.com/jqlang/jq).
 
 ## 🚀 Installation
 
-### crates.io
+### [crates.io](https://crates.io/crates/rekson)
 ```bash
 cargo install rekson
 ```
 
-### From source
+### From [source](https://github.com/pinbraerts/rekson)
 ```bash
 cargo install --git https://github.com/pinbraerts/rekson
 ```
@@ -75,6 +75,7 @@ require("conform").setup({
 ```
 
 ## 👀 Alternatives
-  - https://github.com/adhocore/php-json-fixer
-  - https://github.com/rhysd/fixjson
-  - https://github.com/Berkmann18/json-fixer
+ - https://github.com/adhocore/php-json-fixer
+ - https://github.com/rhysd/fixjson
+ - https://github.com/Berkmann18/json-fixer
+ - https://github.com/messense/dirty-json-rs
