@@ -86,6 +86,8 @@ impl Lexer {
         let next = match character {
             '[' => Lexem::Open(Paired::Bracket),
             ']' => Lexem::Close(Paired::Bracket),
+            '(' => Lexem::Open(Paired::Bracket),
+            ')' => Lexem::Close(Paired::Bracket),
             '{' => Lexem::Open(Paired::Brace),
             '}' => Lexem::Close(Paired::Brace),
             '\0' => Lexem::Close(Paired::File),

@@ -106,6 +106,11 @@ mod tests {
     }
 
     #[test]
+    fn replace_parenthesis() {
+        assert_eq!("[[],[]]", process("((),())"));
+    }
+
+    #[test]
     fn preserve_whitespaces() {
         assert_eq!(
             " [  1,   2,\n\t  3     ]\n\t\t\r\n",

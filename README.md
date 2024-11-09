@@ -18,6 +18,7 @@ This is not a formatter, rather it is intended to be used in conjunction with on
  - [x] correct colon (`{"a"=3} -> {"a":3}`)
  - [x] insert colon (`{b 4} -> {"b":4}`)
  - [x] fix brackets (`{[{[{]] -> {[{[{}]}]}`)
+ - [x] replace parenthesis with brackets (`((),()) -> [[],[]]`)
  - [x] async io
 
 ## 💡 Plans
