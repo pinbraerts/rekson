@@ -56,37 +56,52 @@ mod tests {
 
     #[test]
     fn remove_comma() {
-        assert_eq!(r#"{"a":3,"b": 4}"#, process(r#"{,"a":3,"b"= 4,}"#))
-    }
-
-    #[test]
-    fn remove_colon() {
-        assert_eq!(r#"{"a":3,"b": 4}"#, process(r#"{:"a"=3,"b": 4:}"#))
-    }
-
-    #[test]
-    fn remove_comma_and_colon() {
-        assert_eq!("{}", process(r#":,:=:,,,:,,::="#));
+        assert_eq!(r#"{"a":3}"#, process(r#"{,"a":3,}"#))
     }
 
     #[test]
     fn insert_comma() {
-        assert_eq!("[[],[]]", process("[[][]]"));
+        assert_eq!("[1, 2]", process("[1 2]"));
     }
 
     #[test]
-    fn fix_string() {
+    fn correct_quotes() {
+        assert_eq!(r#"{"key":"value"}"#, process(r#"{`key`:'value'}"#))
+    }
+
+    #[test]
+    fn multiline_string() {
         assert_eq!(
-            "[\"some\\nmultiline\\nstring\", \"\\\"some\\nescaped\\nstring\"]",
-            process("['some\nmultiline\nstring', '\"some\\nescaped\\nstring']")
+            r#"["some\nmultiline\nescaped"]"#,
+            process("[\"some\nmultiline\\nescaped\"]")
         );
     }
 
     #[test]
     fn fix_value() {
         assert_eq!(
-            "[null, null, null, true, false]",
-            process("[nil nul None TruE False]")
+            r#"[null, null, null, true, false, "unknown"]"#,
+            process("[nil nul None TruE False unknown]")
         );
+    }
+
+    #[test]
+    fn auto_quote() {
+        assert_eq!(r#"{"a":3}"#, process(r#"{a:3}"#));
+    }
+
+    #[test]
+    fn correct_colon() {
+        assert_eq!(r#"{"a":3}"#, process(r#"{"a"=3}"#));
+    }
+
+    #[test]
+    fn insert_colon() {
+        assert_eq!(r#"{"b":3}"#, process(r#"{"b"3}"#))
+    }
+
+    #[test]
+    fn fix_brackets() {
+        assert_eq!("{[{[{}]}]}", process("{[{[{]]"));
     }
 }

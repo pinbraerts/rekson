@@ -8,16 +8,16 @@ So I came up with a simple program to fix manually edited json.
 This is not a formatter, rather it is intended to be used in conjunction with one, for example [`jq`](https://github.com/jqlang/jq)).
 
 ## ✨ Features
- - [x] trailing comma (`{"a":3,} -> {"a":3}`)
+ - [x] trailing comma (`{,"a":3,} -> {"a":3}`)
  - [x] comma between values (`[1 2] -> [1, 2]`)
  - [x] correct quotes (```{`key`: 'value'} -> {"key": "value"}```)
  - [x] multiline strings
  - [x] correct booleans (`True -> true`)
  - [x] correct nulls (`None -> null`)
- - [x] correct colon (`{"a"=3} -> {"a":3}`)
  - [x] quote unknown values (`{a:3} -> {"a":3}`)
- - [x] fix brackets (`{[()} -> {[()]}`)
+ - [x] correct colon (`{"a"=3} -> {"a":3}`)
  - [x] insert colon (`{b 4} -> {"b":4}`)
+ - [x] fix brackets (`{[{[{]] -> {[{[{}]}]}`)
  - [x] async io
 
 ## 💡 Plans
