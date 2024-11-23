@@ -44,7 +44,7 @@ fn fix_else(s: Cow<'_, str>) -> Cow<'_, str> {
         "false" => "false".into(),
         &_ => {
             if s.chars().all(|c| c.is_numeric()) {
-                s.into()
+                s
             } else {
                 fix_str(s)
             }
