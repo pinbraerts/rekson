@@ -131,8 +131,8 @@ fn validate(state: State, lexem: Lexem) -> Validate {
 impl Parser {
     pub fn parse(&mut self, lexem: Lexem) -> Vec<Token> {
         let mut result = Vec::new();
-        if let Lexem::WhiteSpace(s) = lexem {
-            self.whitespace.push_str(s.as_str());
+        if let Lexem::WhiteSpace(_) = lexem {
+            self.whitespace.push_str(&String::from(lexem));
             return result;
         }
         let mut tokens = vec![Token::new(lexem, std::mem::take(&mut self.whitespace))];

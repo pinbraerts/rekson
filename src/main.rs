@@ -17,8 +17,7 @@ where
     let mut parser = Parser::default();
     ChunkReader::new(reader, chunk_size)
         .flatten()
-        .map(|c| c as char)
-        .chain(Some('\0'))
+        .chain(Some(0))
         .filter_map(|c| lexer.process(c))
         .chain([Default::default(), Default::default()])
         .flat_map(|l| parser.parse(l))
@@ -46,6 +45,12 @@ mod tests {
     #[test]
     fn empty() {
         assert_eq!("", process(""));
+    }
+
+    #[test]
+    fn non_unicode() {
+        let value = r#"{"некоторое":"значение"}"#;
+        assert_eq!(value, process(value));
     }
 
     #[test]
