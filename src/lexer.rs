@@ -37,13 +37,22 @@ fn fix_str(s: Cow<'_, str>) -> Cow<'_, str> {
         .collect()
 }
 
+fn is_numeric(s: &str) -> bool {
+    let c = match s.chars().next() {
+        Some('+') | Some('-') | Some('.') => s.chars().nth(1),
+        Some(c) => Some(c),
+        None => None,
+    };
+    c.unwrap_or_default().is_ascii_digit()
+}
+
 fn fix_else(s: Cow<'_, str>) -> Cow<'_, str> {
     match s.to_lowercase().as_str() {
         "null" | "nil" | "nul" | "none" => "null".into(),
         "true" => "true".into(),
         "false" => "false".into(),
         &_ => {
-            if s.chars().all(|c| c.is_numeric()) {
+            if is_numeric(&s) {
                 s
             } else {
                 fix_str(s)

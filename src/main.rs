@@ -54,6 +54,12 @@ mod tests {
     }
 
     #[test]
+    fn floats() {
+        let value = r#"{"float":1.4,"with_sign":-2}"#;
+        assert_eq!(value, process(value));
+    }
+
+    #[test]
     fn valid() {
         let value = r#"{"a":3,"b": 4}"#;
         assert_eq!(value, process(value));
