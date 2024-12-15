@@ -136,7 +136,7 @@ impl Parser {
             return result;
         }
         let mut tokens = vec![Token::new(lexem, std::mem::take(&mut self.whitespace))];
-        while let Some(token) = tokens.pop() {
+        while let Some(mut token) = tokens.pop() {
             match validate(
                 self.states.last().cloned().unwrap_or_default(),
                 token.lexem.clone(),
@@ -164,8 +164,9 @@ impl Parser {
                 Validate::DropBefore => {
                     self.states.pop();
                     if let Some(t) = std::mem::take(&mut self.delay) {
-                        self.whitespace = t.whitespace_before + &self.whitespace;
+                        token.whitespace_before = t.whitespace_before + &token.whitespace_before;
                     }
+                    tokens.push(token);
                     continue;
                 }
             };
