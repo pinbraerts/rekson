@@ -38,7 +38,7 @@ jobs:
         first_commit_hash=$(git rev-list --max-parents=0 HEAD)
         first_commit_message=$(git log -1 --pretty=%B $first_commit_hash)
         case $first_commit_message in
-          (fix|feat|bug)*)
+          fix*|feat*|bug*)
             git checkout $first_commit_hash~1 -- tests
             !cargo test --verbose
             ;;
