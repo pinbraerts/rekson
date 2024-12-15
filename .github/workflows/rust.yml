@@ -33,13 +33,14 @@ jobs:
       run: cargo build --release --verbose
     - name: Run tests
       run: cargo test --verbose
-    - name: TDD check old tests
+    - name: TDD check new tests against old binary
       run: |
-        first_commit_hash=$(git rev-list --max-parents=0 HEAD)
-        first_commit_message=$(git log -1 --pretty=%B $first_commit_hash)
-        case $first_commit_message in
+        case '${{ github.event.pull_request.title }}' in
           fix*|feat*|bug*)
-            git checkout $first_commit_hash~1 -- tests
-            !cargo test --verbose
+            git fetch --all
+            git reset --hard ${{ github.event.pull_request.base.sha }}
+            cargo build --release
+            git checkout ${{ github.sha }} -- tests
+            ! cargo test --verbose
             ;;
         esac
