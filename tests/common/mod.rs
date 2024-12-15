@@ -10,9 +10,7 @@ use std::{
 
 pub fn get_json(dirname: impl Into<PathBuf>) -> io::Result<HashMap<OsString, PathBuf>> {
     let mut project = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    println!("{:?}", project);
     project.push(dirname.into());
-    println!("{:?}", project);
     Ok(std::fs::read_dir(project)?
         .filter_map(|f| f.ok())
         .map(|f| (f.file_name(), f.path().to_owned()))
@@ -27,7 +25,9 @@ pub fn read(path: &PathBuf) -> io::Result<Vec<u8>> {
 }
 
 pub fn run(input: Vec<u8>) -> io::Result<Vec<u8>> {
-    let mut rekson = std::process::Command::new("./target/release/rekson")
+    let mut project = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    project.push("target/release/rekson");
+    let mut rekson = std::process::Command::new(project)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
