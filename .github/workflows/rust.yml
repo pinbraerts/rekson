@@ -37,6 +37,7 @@ jobs:
       run: |
         case '${{ github.event.pull_request.title }}' in
           fix*|feat*|bug*)
+            git fetch --all
             git reset --hard ${{ github.event.pull_request.base.sha }}
             cargo build --release
             git checkout ${{ github.sha }} -- tests
