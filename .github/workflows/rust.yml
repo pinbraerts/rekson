@@ -39,7 +39,7 @@ jobs:
           fix*|feat*|bug*)
             git reset --hard ${{ github.head_ref }}
             cargo build --release
-            git checkout ${{ github.ref }} -- tests
+            git checkout ${{ github.sha }} -- tests
             !cargo test --verbose
             ;;
         esac
