@@ -28,4 +28,9 @@ jobs:
       - name: Checkout new tests
         run: git checkout ${{ github.sha }} -- tests
       - name: Run tests
-        run: ! cargo test --verbose
+        run: |
+          cargo test --verbose
+          if [ $? -eq 0 ]; then
+            echo "All tests passed, most likely new code is not covered"
+            exit 1
+          fi
