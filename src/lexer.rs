@@ -107,9 +107,7 @@ impl Lexer {
             b'\0' => Lexem::Close(Paired::File),
             b',' => Lexem::Comma,
             b':' | b'=' => Lexem::Colon,
-            b'"' | b'\'' | b'`' => {
-                return std::mem::replace(&mut self.state, Some(Lexem::String(vec![character])));
-            }
+            b'"' | b'\'' | b'`' => Lexem::String(vec![character]),
             _ => {
                 if character.is_ascii_whitespace() {
                     if let Some(Lexem::WhiteSpace(s)) = &mut self.state {

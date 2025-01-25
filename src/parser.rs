@@ -86,7 +86,7 @@ fn validate(state: State, lexem: Lexem) -> Validate {
             Lexem::Open(paired) => Validate::Push(paired.into()),
             Lexem::Close(Paired::Bracket) => Validate::Take(State::Value),
             Lexem::Close(_) => Validate::Insert(Lexem::Close(Paired::Bracket)),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Object => match lexem {
             Lexem::Comma | Lexem::Colon => Validate::Drop,
@@ -94,14 +94,14 @@ fn validate(state: State, lexem: Lexem) -> Validate {
             Lexem::Open(paired) => Validate::Push(paired.into()),
             Lexem::Close(Paired::Brace) => Validate::Take(State::Value),
             Lexem::Close(_) => Validate::Insert(Lexem::Close(Paired::Brace)),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Value => match lexem {
             Lexem::Comma => Validate::Take(State::Comma),
             Lexem::Colon => Validate::Drop,
             Lexem::Close(_) => Validate::Pop,
             Lexem::Open(_) | Lexem::Else(_) | Lexem::String(_) => Validate::Insert(Lexem::Comma),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Key => match lexem {
             Lexem::Comma => Validate::Drop,
@@ -109,21 +109,21 @@ fn validate(state: State, lexem: Lexem) -> Validate {
             Lexem::Open(_) | Lexem::Close(_) | Lexem::Else(_) | Lexem::String(_) => {
                 Validate::Insert(Lexem::Colon)
             }
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Colon => match lexem {
             Lexem::String(_) | Lexem::Else(_) => Validate::Take(State::Value),
             Lexem::Comma | Lexem::Colon => Validate::Drop,
             Lexem::Open(paired) => Validate::Take(paired.into()),
             Lexem::Close(paired) => Validate::Insert(Lexem::Open(paired)),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Comma => match lexem {
             Lexem::String(_) | Lexem::Else(_) => Validate::Pop,
             Lexem::Comma | Lexem::Colon => Validate::Drop,
             Lexem::Open(paired) => Validate::Take(paired.into()),
             Lexem::Close(_) => Validate::DropBefore,
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
     }
 }
