@@ -1,0 +1,31 @@
+name: Check new tests against old binary
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  new_tests_against_old_binary:
+    if:  startsWith(${{ github.event.pull_request.title }}, 'fix')
+      || startsWith(${{ github.event.pull_request.title }}, 'bug')
+      || startsWith(${{ github.event.pull_request.title }}, 'feat')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.pull_request.base.sha }}
+      - name: Build old binary
+        run: cargo build --release --verbose
+      - name: Checkout new tests
+        run: git checkout ${{ github.sha }} -- tests
+      - name: Run tests
+        run: ! cargo test --verbose
