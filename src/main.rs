@@ -20,9 +20,9 @@ where
         .chain(Some(0))
         .filter_map(|c| lexer.process(c))
         .chain([Default::default(), Default::default()])
-        .flat_map(|l| parser.parse(l))
-        .map(String::from)
-        .for_each(|s| writer.write_all(s.as_bytes()).unwrap());
+        .flat_map(|(l, v)| parser.parse(l, v))
+        .map(Vec::<u8>::from)
+        .for_each(|s| writer.write_all(&s).unwrap());
 }
 
 fn main() {

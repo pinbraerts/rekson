@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Paired {
     Bracket, // []
@@ -7,15 +5,19 @@ pub enum Paired {
     File,    // start, end
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Lexem {
-    String(Vec<u8>),
+    String,
     Open(Paired),
     Close(Paired),
     Comma,
     Colon,
-    Else(Vec<u8>),
-    WhiteSpace(Vec<u8>),
+    Else,
+    WhiteSpace,
+}
+
+fn joinable(lexem: Lexem) -> bool {
+    matches!(lexem, Lexem::Else | Lexem::String | Lexem::WhiteSpace)
 }
 
 impl Default for Lexem {
@@ -24,80 +26,9 @@ impl Default for Lexem {
     }
 }
 
-fn fix_str(s: Cow<'_, str>) -> Cow<'_, str> {
-    Some('\"')
-        .into_iter()
-        .chain(
-            s.replace('\n', r"\n")
-                .replace("\\\"", "\"")
-                .replace('"', "\\\"")
-                .chars(),
-        )
-        .chain(Some('\"'))
-        .collect()
-}
-
-fn is_numeric(s: &str) -> bool {
-    let c = match s.chars().next() {
-        Some('+') | Some('-') | Some('.') => s.chars().nth(1),
-        Some(c) => Some(c),
-        None => None,
-    };
-    c.unwrap_or_default().is_ascii_digit()
-}
-
-fn fix_else(s: Cow<'_, str>) -> Cow<'_, str> {
-    match s.to_lowercase().as_str() {
-        "null" | "nil" | "nul" | "none" => "null".into(),
-        "true" => "true".into(),
-        "false" => "false".into(),
-        &_ => {
-            if is_numeric(&s) {
-                s
-            } else {
-                fix_str(s)
-            }
-        }
-    }
-}
-
-impl From<Lexem> for String {
-    fn from(val: Lexem) -> Self {
-        match val {
-            Lexem::Comma => ",".into(),
-            Lexem::Colon => ":".into(),
-            Lexem::Open(Paired::Bracket) => "[".into(),
-            Lexem::Close(Paired::Bracket) => "]".into(),
-            Lexem::Open(Paired::Brace) => "{".into(),
-            Lexem::Close(Paired::Brace) => "}".into(),
-            Lexem::Open(Paired::File) | Lexem::Close(Paired::File) => "".into(),
-            Lexem::Else(s) => fix_else(String::from_utf8_lossy(&s)).into_owned(),
-            Lexem::String(s) => fix_str(String::from_utf8_lossy(
-                s.get(1..s.len() - 1).unwrap_or_default(),
-            ))
-            .into_owned(),
-            Lexem::WhiteSpace(s) => String::from_utf8_lossy(&s).into_owned(),
-        }
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct Lexer {
-    state: Option<Lexem>,
-}
-
-impl Lexer {
-    pub fn process(&mut self, character: u8) -> Option<Lexem> {
-        if let Some(Lexem::String(s)) = &mut self.state {
-            let first_char = s.iter().next().cloned().unwrap_or_default();
-            let last_char = s.iter().last().cloned().unwrap_or_default();
-            s.push(character);
-            if last_char != b'\\' && character == first_char {
-                return std::mem::take(&mut self.state);
-            }
-            return None;
-        }
-        let next = match character {
+impl From<u8> for Lexem {
+    fn from(character: u8) -> Self {
+        match character {
             b'[' => Lexem::Open(Paired::Bracket),
             b']' => Lexem::Close(Paired::Bracket),
             b'(' => Lexem::Open(Paired::Bracket),
@@ -107,23 +38,147 @@ impl Lexer {
             b'\0' => Lexem::Close(Paired::File),
             b',' => Lexem::Comma,
             b':' | b'=' => Lexem::Colon,
-            b'"' | b'\'' | b'`' => Lexem::String(vec![character]),
+            b'\'' | b'"' | b'`' => Lexem::String,
             _ => {
                 if character.is_ascii_whitespace() {
-                    if let Some(Lexem::WhiteSpace(s)) = &mut self.state {
-                        s.push(character);
-                        return None;
-                    }
-                    Lexem::WhiteSpace(vec![character])
+                    Lexem::WhiteSpace
                 } else {
-                    if let Some(Lexem::Else(s)) = &mut self.state {
-                        s.push(character);
-                        return None;
-                    }
-                    Lexem::Else(vec![character])
+                    Lexem::Else
                 }
             }
+        }
+    }
+}
+
+impl From<Lexem> for Option<u8> {
+    fn from(val: Lexem) -> Self {
+        Some(match val {
+            Lexem::String => b'"',
+            Lexem::Open(Paired::Bracket) => b'[',
+            Lexem::Close(Paired::Bracket) => b']',
+            Lexem::Open(Paired::Brace) => b'{',
+            Lexem::Close(Paired::Brace) => b'}',
+            Lexem::Comma => b',',
+            Lexem::Colon => b':',
+            _ => {
+                return None;
+            }
+        })
+    }
+}
+
+impl From<Lexem> for Vec<u8> {
+    fn from(val: Lexem) -> Self {
+        Into::<Option<u8>>::into(val).into_iter().collect()
+    }
+}
+
+fn fix_str(s: &[u8]) -> Vec<u8> {
+    let mut result = vec![b'"'];
+    let mut escaped = false;
+    for c in s.iter() {
+        if *c == b'\\' {
+            escaped = !escaped;
+            continue;
+        }
+        match c {
+            b'"' => {
+                escaped = true;
+            }
+            b'\n' => {
+                if !escaped {
+                    result.push(b'\\')
+                }
+                result.push(b'n');
+                continue;
+            }
+            b'\r' => {
+                if !escaped {
+                    result.push(b'\\')
+                }
+                result.push(b'r');
+                continue;
+            }
+            _ => {}
         };
-        std::mem::replace(&mut self.state, Some(next))
+        if escaped {
+            result.push(b'\\');
+        }
+        result.push(*c);
+        escaped = false;
+    }
+    result.push(b'"');
+    result
+}
+
+fn is_numeric(s: &[u8]) -> bool {
+    let c = match s.first() {
+        Some(b'+') | Some(b'-') | Some(b'.') => s.get(1),
+        Some(c) => Some(c),
+        None => None,
+    };
+    c.cloned().unwrap_or_default().is_ascii_digit()
+}
+
+fn fix_else(s: Vec<u8>) -> Vec<u8> {
+    match s.to_ascii_lowercase().as_slice() {
+        b"null" | b"nil" | b"nul" | b"none" => b"null".to_vec(),
+        b"true" => b"true".to_vec(),
+        b"false" => b"false".to_vec(),
+        &_ => {
+            if is_numeric(&s) {
+                s
+            } else {
+                fix_str(&s)
+            }
+        }
+    }
+}
+
+pub fn fix_lexem(lexem: Lexem, value: Vec<u8>) -> Vec<u8> {
+    match lexem {
+        Lexem::String => fix_str(if value.len() > 2 {
+            value.get(1..value.len() - 1).expect("value.len() > 2")
+        } else {
+            &[]
+        }),
+        Lexem::Else => fix_else(value),
+        lexem => lexem.into(),
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Lexer {
+    state: Vec<u8>,
+    lexem: Option<Lexem>,
+}
+
+impl Lexer {
+    pub fn process(&mut self, character: u8) -> Option<(Lexem, Vec<u8>)> {
+        if cfg!(debug_assertions) {
+            eprintln!("{character} {}", character as char);
+        }
+        if let Some(Lexem::String) = self.lexem {
+            let first_char = self.state.first().cloned().unwrap_or_default();
+            let last_char = self.state.last().cloned().unwrap_or_default();
+            self.state.push(character);
+            if last_char != b'\\' && character == first_char {
+                self.lexem = None;
+                return Some((Lexem::String, std::mem::take(&mut self.state)));
+            }
+            return None;
+        }
+        let next = Lexem::from(character);
+        let Some(lexem) = self.lexem else {
+            self.state.push(character);
+            self.lexem = Some(next);
+            return None;
+        };
+        if joinable(lexem) && lexem == next {
+            self.state.push(character);
+            return None;
+        }
+        self.lexem = Some(next);
+        Some((lexem, std::mem::replace(&mut self.state, vec![character])))
     }
 }
