@@ -18,15 +18,15 @@ for example [`jq`](https://github.com/jqlang/jq).
  - [x] quote unknown values (`{a:3} -> {"a":3}`)
  - [x] correct colon (`{"a"=3} -> {"a":3}`)
  - [x] insert colon (`{b 4} -> {"b":4}`)
- - [x] fix brackets (`{[{[{]] -> {[{[{}]}]}`)
  - [x] replace parenthesis with brackets (`((),()) -> [[],[]]`)
- - [x] async io
+ - [x] sequential io
+ - [x] strip single-line comments
 
 ## 💡 Plans
- - [ ] strip comments
- - [ ] convert numbers (`0xff -> 256`)
- - [ ] COW (reduce memory copying)
- - [ ] multithreading
+ - [ ] [convert numbers](https://github.com/pinbraerts/rekson/issues/10) (`0xff -> 256`)
+ - [ ] [COW](https://github.com/pinbraerts/rekson/issues/7) (reduce memory copying)
+ - [ ] [autoclose quotes](https://github.com/pinbraerts/rekson/issues/12)
+ - [ ] strip multiline comments
 
 ## ✅ Pros
  - written in Rust => instant format on write
