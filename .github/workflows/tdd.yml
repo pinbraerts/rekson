@@ -23,7 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Checkout old version
+      - name: Pull all refs
+        run: git fetch --all
+      - name: Checkout base
         run: git reset --hard ${{ github.event.pull_request.base.sha }}
       - name: Build old binary
         run: cargo build --release --verbose
@@ -31,10 +33,9 @@ jobs:
         run: git checkout ${{ github.sha }} -- tests
       - name: Run tests
         run: |
-          cargo test --verbose
-          if [ $? -eq 0 ]; then
+          if ! cargo test --verbose; then
+            exit 0
+          else
             echo "All tests passed, most likely new code is not covered"
             exit 1
-          else
-            exit 0
           fi
