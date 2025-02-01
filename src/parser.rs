@@ -1,35 +1,37 @@
-use crate::lexer::{Lexem, Paired};
+use crate::lexer::{fix_lexem, Lexem, Paired};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Token {
     pub lexem: Lexem,
-    pub whitespace_before: String,
+    pub whitespace_before: Vec<u8>,
+    pub value: Vec<u8>,
 }
 
 impl Token {
-    pub fn new(lexem: Lexem, whitespace_before: impl Into<String>) -> Self {
+    pub fn new(
+        lexem: Lexem,
+        whitespace_before: impl Into<Vec<u8>>,
+        value: impl Into<Vec<u8>>,
+    ) -> Self {
         Self {
             lexem,
             whitespace_before: whitespace_before.into(),
+            value: value.into(),
         }
     }
 }
 
 impl From<Lexem> for Token {
-    fn from(value: Lexem) -> Self {
-        Self::new(value, String::new())
+    fn from(lexem: Lexem) -> Self {
+        Self::new(lexem, Vec::new(), lexem)
     }
 }
 
-impl Default for Token {
-    fn default() -> Self {
-        Lexem::Open(Paired::File).into()
-    }
-}
-
-impl From<Token> for String {
+impl From<Token> for Vec<u8> {
     fn from(value: Token) -> Self {
-        value.whitespace_before.clone() + &Into::<String>::into(value.lexem)
+        let mut result = value.whitespace_before.clone();
+        result.extend(fix_lexem(value.lexem, value.value));
+        result
     }
 }
 
@@ -47,6 +49,7 @@ enum State {
 
 type States = Vec<State>;
 
+#[derive(Debug)]
 enum Validate {
     Take(State),
     Push(State),
@@ -58,7 +61,7 @@ enum Validate {
 
 #[derive(Default, Debug)]
 pub struct Parser {
-    whitespace: String,
+    whitespace: Vec<u8>,
     states: States,
     delay: Option<Token>,
 }
@@ -74,7 +77,10 @@ impl From<Paired> for State {
 }
 
 fn validate(state: State, lexem: Lexem) -> Validate {
-    match state {
+    if cfg!(debug_assertions) {
+        eprint!("{state:?} {lexem:?} ");
+    }
+    let current_state = match state {
         State::File => match lexem {
             Lexem::Close(Paired::File) => Validate::Take(state),
             Lexem::Open(paired) => Validate::Take(paired.into()),
@@ -82,65 +88,73 @@ fn validate(state: State, lexem: Lexem) -> Validate {
         },
         State::Array => match lexem {
             Lexem::Comma | Lexem::Colon => Validate::Drop,
-            Lexem::String(_) | Lexem::Else(_) => Validate::Push(State::Value),
+            Lexem::String | Lexem::Else => Validate::Push(State::Value),
             Lexem::Open(paired) => Validate::Push(paired.into()),
             Lexem::Close(Paired::Bracket) => Validate::Take(State::Value),
             Lexem::Close(_) => Validate::Insert(Lexem::Close(Paired::Bracket)),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Object => match lexem {
             Lexem::Comma | Lexem::Colon => Validate::Drop,
-            Lexem::String(_) | Lexem::Else(_) => Validate::Push(State::Key),
+            Lexem::String | Lexem::Else => Validate::Push(State::Key),
             Lexem::Open(paired) => Validate::Push(paired.into()),
             Lexem::Close(Paired::Brace) => Validate::Take(State::Value),
             Lexem::Close(_) => Validate::Insert(Lexem::Close(Paired::Brace)),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Value => match lexem {
             Lexem::Comma => Validate::Take(State::Comma),
             Lexem::Colon => Validate::Drop,
             Lexem::Close(_) => Validate::Pop,
-            Lexem::Open(_) | Lexem::Else(_) | Lexem::String(_) => Validate::Insert(Lexem::Comma),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            Lexem::Open(_) | Lexem::Else | Lexem::String => Validate::Insert(Lexem::Comma),
+            _ => unreachable!(),
         },
         State::Key => match lexem {
             Lexem::Comma => Validate::Drop,
             Lexem::Colon => Validate::Take(State::Colon),
-            Lexem::Open(_) | Lexem::Close(_) | Lexem::Else(_) | Lexem::String(_) => {
+            Lexem::Open(_) | Lexem::Close(_) | Lexem::Else | Lexem::String => {
                 Validate::Insert(Lexem::Colon)
             }
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Colon => match lexem {
-            Lexem::String(_) | Lexem::Else(_) => Validate::Take(State::Value),
+            Lexem::String | Lexem::Else => Validate::Take(State::Value),
             Lexem::Comma | Lexem::Colon => Validate::Drop,
             Lexem::Open(paired) => Validate::Take(paired.into()),
             Lexem::Close(paired) => Validate::Insert(Lexem::Open(paired)),
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
         State::Comma => match lexem {
-            Lexem::String(_) | Lexem::Else(_) => Validate::Pop,
+            Lexem::String | Lexem::Else => Validate::Pop,
             Lexem::Comma | Lexem::Colon => Validate::Drop,
             Lexem::Open(paired) => Validate::Take(paired.into()),
             Lexem::Close(_) => Validate::DropBefore,
-            Lexem::WhiteSpace(_) => unreachable!(),
+            _ => unreachable!(),
         },
+    };
+    if cfg!(debug_assertions) {
+        eprintln!("{current_state:?}");
     }
+    current_state
 }
 
 impl Parser {
-    pub fn parse(&mut self, lexem: Lexem) -> Vec<Token> {
+    pub fn parse(&mut self, lexem: Lexem, value: Vec<u8>) -> Vec<Token> {
+        if cfg!(debug_assertions) {
+            eprintln!("LEXEM {lexem:?} {value:?}");
+        }
         let mut result = Vec::new();
-        if let Lexem::WhiteSpace(_) = lexem {
-            self.whitespace.push_str(&String::from(lexem));
+        if let Lexem::WhiteSpace = lexem {
+            self.whitespace.extend(value);
             return result;
         }
-        let mut tokens = vec![Token::new(lexem, std::mem::take(&mut self.whitespace))];
+        let mut tokens = vec![Token::new(
+            lexem,
+            std::mem::take(&mut self.whitespace),
+            value,
+        )];
         while let Some(mut token) = tokens.pop() {
-            match validate(
-                self.states.last().cloned().unwrap_or_default(),
-                token.lexem.clone(),
-            ) {
+            match validate(self.states.last().cloned().unwrap_or_default(), token.lexem) {
                 Validate::Push(state) => {
                     self.states.push(state);
                 }
@@ -163,13 +177,17 @@ impl Parser {
                 }
                 Validate::DropBefore => {
                     self.states.pop();
-                    if let Some(t) = std::mem::take(&mut self.delay) {
-                        token.whitespace_before = t.whitespace_before + &token.whitespace_before;
+                    if let Some(mut t) = std::mem::take(&mut self.delay) {
+                        t.whitespace_before.extend(token.whitespace_before);
+                        token.whitespace_before = t.whitespace_before;
                     }
                     tokens.push(token);
                     continue;
                 }
             };
+            if cfg!(debug_assertions) {
+                eprintln!("{0:?} ", self.states);
+            }
             result.extend(std::mem::replace(&mut self.delay, Some(token)));
         }
         result
