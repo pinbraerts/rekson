@@ -6,6 +6,11 @@ pub enum Paired {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Comment {
+    Oneline, // // or # or ;
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Lexem {
     String,
     Open(Paired),
@@ -14,6 +19,7 @@ pub enum Lexem {
     Colon,
     Else,
     WhiteSpace,
+    Comment(Comment),
 }
 
 fn joinable(lexem: Lexem) -> bool {
@@ -39,6 +45,7 @@ impl From<u8> for Lexem {
             b',' => Lexem::Comma,
             b':' | b'=' => Lexem::Colon,
             b'\'' | b'"' | b'`' => Lexem::String,
+            b';' | b'#' | b'/' => Lexem::Comment(Comment::Oneline),
             _ => {
                 if character.is_ascii_whitespace() {
                     Lexem::WhiteSpace
@@ -157,6 +164,17 @@ impl Lexer {
     pub fn process(&mut self, character: u8) -> Option<(Lexem, Vec<u8>)> {
         if cfg!(debug_assertions) {
             eprintln!("{character} {}", character as char);
+        }
+        if let Some(Lexem::Comment(Comment::Oneline)) = self.lexem {
+            if character == b'\r' || character == b'\n' {
+                self.lexem = Some(Lexem::WhiteSpace);
+                return Some((
+                    Lexem::Comment(Comment::Oneline),
+                    std::mem::replace(&mut self.state, vec![character]),
+                ));
+            }
+            self.state.push(character);
+            return None;
         }
         if let Some(Lexem::String) = self.lexem {
             let first_char = self.state.first().cloned().unwrap_or_default();

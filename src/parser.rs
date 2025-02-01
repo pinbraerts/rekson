@@ -143,6 +143,9 @@ impl Parser {
             eprintln!("LEXEM {lexem:?} {value:?}");
         }
         let mut result = Vec::new();
+        if let Lexem::Comment(_) = lexem {
+            return result;
+        }
         if let Lexem::WhiteSpace = lexem {
             self.whitespace.extend(value);
             return result;
