@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
+      - name: Checkout old version
+        run: git reset --hard ${{ github.event.pull_request.base.sha }}
       - name: Build old binary
         run: cargo build --release --verbose
       - name: Checkout new tests
