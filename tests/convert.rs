@@ -1,23 +1,15 @@
-use std::{ffi::OsString, path::PathBuf};
+use std::{path::PathBuf, str::FromStr};
 mod common;
-use common::{get_json, read, run};
+use common::{read, run};
 
-fn compare(name: &OsString, input: &PathBuf, output: &PathBuf) {
+fn compare(name: &str, input: &str, output: &str) {
     println!("comparing {:?}", name);
-    let input = read(input).expect("failed to read input");
-    let expected_output = read(output).expect("failed to read output file");
+    let input = PathBuf::from_str(input).unwrap();
+    let output = PathBuf::from_str(output).unwrap();
+    let input = read(&input).expect("failed to read input");
+    let expected_output = read(&output).expect("failed to read output file");
     let output = run(input).expect("failed to execute a program");
     assert!(expected_output == output);
 }
 
-#[test]
-fn convert() {
-    let input = get_json("tests/input").expect("failed to read input dir");
-    assert!(!input.is_empty());
-    let output = get_json("tests/output").expect("failed to read output dir");
-    assert!(!output.is_empty());
-    input
-        .into_iter()
-        .filter_map(|i| output.get(&i.0).map(|o| (i.0, i.1, o)))
-        .for_each(|x| compare(&x.0, &x.1, x.2));
-}
+include!(concat!(env!("OUT_DIR"), "/convert.rs"));
