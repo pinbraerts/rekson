@@ -1,21 +1,10 @@
 use std::{
-    collections::HashMap,
-    ffi::OsString,
     fs::File,
     io::{self, Read, Write},
     path::PathBuf,
     process::Stdio,
     thread,
 };
-
-pub fn get_json(dirname: impl Into<PathBuf>) -> io::Result<HashMap<OsString, PathBuf>> {
-    let mut project = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    project.push(dirname.into());
-    Ok(std::fs::read_dir(project)?
-        .filter_map(|f| f.ok())
-        .map(|f| (f.file_name(), f.path().to_owned()))
-        .collect())
-}
 
 pub fn read(path: &PathBuf) -> io::Result<Vec<u8>> {
     let mut content = Vec::new();
