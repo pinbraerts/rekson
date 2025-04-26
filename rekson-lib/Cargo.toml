@@ -1,18 +1,13 @@
 [package]
-name = "rekson"
-version = "0.0.2"
+name = "rekson-lib"
+version = "0.0.1"
 edition = "2021"
 license = "MIT"
-description = "A simple standalone to rectify json"
+description = "A simple library to rectify json"
 homepage = "https://github.com/pinbraerts/rekson"
 repository = "https://github.com/pinbraerts/rekson"
 readme = "README.md"
 categories = ["command-line-utilities", "development-tools"]
 keywords = ["json", "fix-json", "bad-json", "dirty-json"]
 
-[[bin]]
-name = "rekson"
-path = "src/main.rs"
-
 [dependencies]
-rekson-lib = { version = "0.0.1", path = "./rekson-lib/"}

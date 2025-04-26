@@ -3,12 +3,5 @@
 version = 3
 
 [[package]]
-name = "rekson"
-version = "0.0.2"
-dependencies = [
- "rekson-lib",
-]
-
-[[package]]
 name = "rekson-lib"
 version = "0.0.1"
