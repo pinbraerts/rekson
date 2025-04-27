@@ -11,3 +11,6 @@ categories = ["command-line-utilities", "development-tools"]
 keywords = ["json", "fix-json", "bad-json", "dirty-json"]
 
 [dependencies]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
