@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Rust Wasm Example</title>
+    <script type="module">
+      import init, { process_string_lossy } from "./pkg/rekson.js";
+      init();
+
+      async function onConvert(event) {
+        event.preventDefault();
+        const inputText = document.getElementById("input").value;
+        const result = await process_string_lossy(inputText);
+        document.getElementById("output").textContent = result;
+      }
+
+      async function pasteToInput(event) {
+        event.preventDefault();
+        document.getElementById("input").value =
+          await navigator.clipboard.readText();
+      }
+
+      async function copyFromOutput(event) {
+        event.preventDefault();
+        await navigator.clipboard.writeText(
+          document.getElementById("output").textContent,
+        );
+      }
+
+      window.onload = () => {
+        document.getElementById("convert").addEventListener("click", onConvert);
+        document
+          .getElementById("copy")
+          .addEventListener("click", copyFromOutput);
+        document
+          .getElementById("paste")
+          .addEventListener("click", pasteToInput);
+        document.addEventListener("keydown", (event) => {
+          if (!event.ctrlKey) {
+            return;
+          }
+          if (event.key === "Enter") {
+            onConvert(event);
+          } else if (event.key === "c") {
+            copyFromOutput(event);
+          } else if (event.key === "v") {
+            pasteToInput(event);
+          }
+        });
+      };
+    </script>
+    <style>
+      .no-padding {
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+      html,
+      body {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+      }
+      .container {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        align-content: stretch;
+      }
+      .code {
+        padding: 10px;
+        flex-grow: 1;
+        border: 1px solid;
+        border-radius: 8px;
+        resize: none;
+      }
+      .container > * {
+        display: flex;
+        flex-direction: column;
+        margin: 10px;
+      }
+      .subcontainer {
+        flex: 1;
+        position: relative;
+      }
+      .midcontainer {
+        flex: 0;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      .midcontainer > * {
+        margin: 10px;
+      }
+      .button {
+        display: inline-flex;
+        flex: 0;
+        align-items: center;
+        font-size: 14px;
+        font-family: sans-serif;
+        padding: 15px;
+        cursor: pointer;
+        height: 0;
+        white-space: nowrap;
+        border: 1px solid;
+        border-radius: 8px;
+        text-decoration: none;
+        background-color: #eee;
+        color: black;
+      }
+      .button:visited {
+        color: black;
+      }
+      .floating {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        html,
+        body {
+          background-color: #333;
+          color: white;
+        }
+        .code {
+          border-color: #555;
+          background-color: #444;
+          color: white;
+        }
+        .button {
+          border-color: #333;
+          background-color: #555;
+          color: white;
+        }
+        .button:visited {
+          color: white;
+        }
+      }
+    </style>
+  </head>
+  <body class="no-padding">
+    <div class="container no-padding">
+      <div class="subcontainer">
+        <textarea id="input" class="code"></textarea>
+        <button id="paste" class="floating button" title="ctrl+v">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"
+            />
+            <path
+              d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"
+            />
+          </svg>
+        </button>
+      </div>
+      <div class="midcontainer">
+        <button id="convert" class="button" title="ctrl+enter">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708"
+            />
+            <path
+              fill-rule="evenodd"
+              d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708"
+            />
+          </svg>
+        </button>
+        <a
+          href="https://github.com/pinbraerts/rekson"
+          class="button"
+          target="_block"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"
+            />
+          </svg>
+        </a>
+      </div>
+      <div class="subcontainer">
+        <code id="output" class="code"></code>
+        <button id="copy" class="floating button" title="ctrl+c">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

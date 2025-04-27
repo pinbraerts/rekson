@@ -34,3 +34,14 @@ pub fn process_bytes(input: &[u8]) -> Vec<u8> {
     drop(writer);
     output
 }
+
+#[cfg(target_arch = "wasm32")]
+mod wasm {
+    use crate::process_bytes;
+    use wasm_bindgen::prelude::wasm_bindgen;
+
+    #[wasm_bindgen]
+    pub fn process_string_lossy(input: &str) -> String {
+        String::from_utf8_lossy(&process_bytes(input.as_bytes())).into()
+    }
+}
