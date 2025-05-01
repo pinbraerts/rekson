@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <g transform="rotate(45, 256, 256)">
+    <!-- Red part of the wrench -->
+    <path d="M230 150 Q256 180 280 150 L310 230 Q280 260 250 230 Z"
+          fill="#E74C3C" opacity="0.9"/>
+    <!-- Blue part of the wrench -->
+    <path d="M280 150 Q300 200 330 150 L310 230 Q260 280 210 230 Z"
+          fill="#3498DB" opacity="0.9"/>
+    <!-- Green part of the wrench -->
+    <path d="M210 230 Q256 280 310 230 L280 150 Q256 120 230 150 Z"
+          fill="#2ECC71" opacity="0.9"/>
+  </g>
+</svg>
