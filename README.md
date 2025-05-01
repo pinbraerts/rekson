@@ -1,5 +1,5 @@
 # ⚡ rekson
-rectify your json
+rectify your json. [Try it in the browser!](https://pinbraerts.github.io/rekson/)
 
 ## 🍎 Motivation
 I frequently edit [json](https://json.org) files.
