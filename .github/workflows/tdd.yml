@@ -16,9 +16,10 @@ env:
 jobs:
   new_tests_against_old_binary:
     if: ${{
-         startsWith(github.event.pull_request.title, 'fix')
-      || startsWith(github.event.pull_request.title, 'bug')
-      || startsWith(github.event.pull_request.title, 'feat')
+      !contains(github.event.pull_request.title, '(web):')
+      && (startsWith(github.event.pull_request.title, 'fix')
+       || startsWith(github.event.pull_request.title, 'bug')
+       || startsWith(github.event.pull_request.title, 'feat'))
       }}
     runs-on: ubuntu-latest
     steps:
